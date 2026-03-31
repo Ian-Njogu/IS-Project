@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import api from '../services/api';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -10,9 +11,9 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/tc', icon: 'fa-solid fa-table-columns' }, // 5 recent matches and pending patient verification requests
-    { name: 'Register Patients', href: '/patients', icon: 'fa-solid fa-user-plus' }, // show the registration form and patients list at the bottom
-    { name: 'Matching Results', href: '/matches', icon: 'fa-solid fa-table-list' }, // show the registration form and patients list at the bottom
+    { name: 'Dashboard', href: '/tc', icon: 'fa-solid fa-table-columns' }, 
+    { name: 'Register Patients', href: '/patients', icon: 'fa-solid fa-user-plus' }, 
+    { name: 'Matching Results', href: '/matches', icon: 'fa-solid fa-table-list' }, 
 ];
 
 function TCMatches() {
@@ -21,6 +22,11 @@ function TCMatches() {
 
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
+
+    const [recipients, setRecipients] = useState([]);
+    const [matching, setMatching] = useState(null);
+    const [selectedRecipient, setSelectedRecipient] = useState(null);
+    const [matchResults, setMatchResults] = useState([]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -31,6 +37,34 @@ function TCMatches() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const fetchRecipients = async () => {
+            try {
+                // Get all unified patients and filter only Recipients
+                const res = await api.get('/unified-patients/');
+                const activeRecipients = res.data.filter(p => p.patient_type === 'Recipient');
+                setRecipients(activeRecipients);
+            } catch (err) {
+                console.error("Error fetching recipients", err);
+            }
+        };
+        fetchRecipients();
+    }, []);
+
+    const runMatch = async (patientId, patientName) => {
+        setMatching(patientId);
+        setSelectedRecipient(patientName);
+        try {
+            const res = await api.post('/matching/run/', { recipient_id: patientId });
+            setMatchResults(res.data);
+        } catch (err) {
+            console.error("Error running match", err);
+            alert("An error occurred while running the match operation.");
+        } finally {
+            setMatching(null);
+        }
+    };
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -98,8 +132,102 @@ function TCMatches() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8">
-                    <div className="text-slate-400 italic">No content provided for this view.</div>
+                <main className="p-4 sm:p-8 space-y-8">
+                    {/* Active Recipients Section */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="border-b border-slate-100 p-4 bg-slate-50/50">
+                            <h2 className="font-bold text-slate-700">Active Recipients Waiting for Match</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                        <th className="px-6 py-4 font-bold">Recipient Name</th>
+                                        <th className="px-6 py-4 font-bold">Organ Needed</th>
+                                        <th className="px-6 py-4 font-bold">Blood Type</th>
+                                        <th className="px-6 py-4 font-bold text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {recipients.map((r, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 text-sm font-bold text-[#042d6d]">{r.name}</td>
+                                            <td className="px-6 py-4 text-sm text-slate-600">{r.organ}</td>
+                                            <td className="px-6 py-4 text-sm font-mono">{r.blood_type}</td>
+                                            <td className="px-6 py-4 text-sm text-right">
+                                                <button 
+                                                    onClick={() => runMatch(r.patient_id, r.name)}
+                                                    disabled={matching === r.patient_id}
+                                                    className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 transition"
+                                                >
+                                                    {matching === r.patient_id ? 'Running...' : 'Run Match Algorithm'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {recipients.length === 0 && (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-8 text-center text-slate-500 text-sm">
+                                                No active recipients found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {/* Match Results Section */}
+                    {selectedRecipient && matchResults.length > 0 && (
+                        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden border-t-4 border-t-green-500">
+                            <div className="border-b border-slate-100 p-4 bg-green-50 flex justify-between items-center">
+                                <div>
+                                    <h2 className="font-bold text-green-800">Top Matches for {selectedRecipient}</h2>
+                                    <p className="text-xs text-green-700 mt-1">Showing compatible donors ordered by highest compatibility score.</p>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                            <th className="px-6 py-4 font-bold">Match ID</th>
+                                            <th className="px-6 py-4 font-bold">Donor Name</th>
+                                            <th className="px-6 py-4 font-bold">Compatibility Score</th>
+                                            <th className="px-6 py-4 font-bold">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {matchResults.map((m, idx) => (
+                                            <tr key={idx} className="hover:bg-green-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-sm font-mono text-slate-500">#{m.match_id}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-[#042d6d]">{m.donor_name}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-full bg-slate-200 rounded-full h-2.5 max-w-[100px]">
+                                                            <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${Math.min(m.compatibility_score, 100)}%` }}></div>
+                                                        </div>
+                                                        <span className="text-sm font-bold text-green-700">{m.compatibility_score}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700">
+                                                        {m.match_status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    )}
+                    
+                    {selectedRecipient && matchResults.length === 0 && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                            <FontAwesomeIcon icon="fa-solid fa-triangle-exclamation" />
+                            No compatible donors found for {selectedRecipient} at this time.
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

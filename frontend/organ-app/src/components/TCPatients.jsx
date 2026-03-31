@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-/* import all the icons and dependencies*/
+import api from '../services/api';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -45,34 +46,45 @@ function TCPatients() {
         return d.toISOString().split('T')[0];
     };
 
-    // const fetchPatients = async () => {
-    //     try {
-    //         const res = await axios.get('/api/unified-patients/');
-    //         setPatients(res.data);
-    //     } catch (err) {
-    //         console.error("Error fetching patients", err);
-    //     }
-    // };
+    const fetchPatients = async () => {
+        try {
+            const res = await api.get('/unified-patients/');
+            setPatients(res.data);
+        } catch (err) {
+            console.error("Error fetching patients", err);
+        }
+    };
 
-    // useEffect(() => {
-    //     fetchPatients();
-    // }, []);
+    useEffect(() => {
+        fetchPatients();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
-        // Combine blood group and rhesus for the backend
         const submissionData = {
             ...formData,
             blood_type: `${formData.blood_group}${formData.rhesus_factor}`,
-            organ: formData.organ, // ensuring names match serializer
+            organ: formData.organ, 
         };
 
         try {
-            await axios.post('/api/unified-patients/', submissionData);
-            alert("Patient and Medical Record created successfully!");
-            // Reset and fetch logic...
+            await api.post('/unified-patients/', submissionData);
+            alert("Patient registered successfully!");
+            setFormData({
+                name: '',
+                patient_type: 'Donor',
+                organ: 'Kidney',
+                blood_group: 'A',     
+                rhesus_factor: '+',    
+                medical_state: 'Living', 
+                weight: '',
+                height: '',
+                blood_pressure: '',
+                lab_date: new Date().toISOString().split('T')[0]
+            })
+            fetchPatients();
         } catch (err) {
             console.error(err);
             alert("Registration failed.");

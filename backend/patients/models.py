@@ -9,10 +9,11 @@ class Patient(TimeStampedModel):
         on_delete=models.CASCADE, 
         related_name='patients'
     )
+    name = models.CharField(max_length=255, default='Unknown Patient')
     blood_type = models.CharField(max_length=10) # Choices: A+, O-, etc.
     organ_type = models.CharField(max_length=100)
     medical_history = models.TextField()
-    urgency_level = models.IntegerField(help_text="Higher number = more urgent")
+    urgency_level = models.IntegerField(help_text="Higher number = more urgent", default=1)
 
     def __str__(self):
         return f"Patient {self.patient_id} ({self.organ_type})"
