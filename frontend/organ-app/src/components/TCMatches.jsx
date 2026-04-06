@@ -28,6 +28,13 @@ function TCMatches() {
     const [selectedRecipient, setSelectedRecipient] = useState(null);
     const [matchResults, setMatchResults] = useState([]);
     const [displayName, setDisplayName] = useState('User');
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+    const [scheduleModal, setScheduleModal] = useState({ isOpen: false, matchId: null, status: null, date: '' });
+
+    const showNotification = (message, type = 'success') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 5000);
+    };
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -59,28 +66,40 @@ function TCMatches() {
         try {
             const res = await api.post('/matching/run/', { recipient_id: patientId });
             setMatchResults(res.data);
+            showNotification(`Algorithm execution complete. Found ${res.data.length} potential matches.`);
         } catch (err) {
             console.error("Error running match", err);
-            alert("An error occurred while running the match operation.");
+            showNotification("An error occurred while running the match operation.", "error");
         } finally {
             setMatching(null);
         }
     };
 
-    const updateMatchStatus = async (matchId, newStatus) => {
+    const confirmStatusUpdate = async (matchId, newStatus, scheduledDate = null) => {
         try {
             const payload = { match_status: newStatus };
-            if (newStatus === 'APPROVED') {
-                const date = prompt("Enter scheduled date (YYYY-MM-DD HH:MM):", new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16).replace('T', ' '));
-                if (date) payload.scheduled_date = date;
-            }
+            if (scheduledDate) payload.scheduled_date = scheduledDate;
+            
             await api.patch(`/matching/${matchId}/`, payload);
-            alert(`Match status updated to ${newStatus}`);
+            showNotification(`Match status successfully updated to ${newStatus}`);
+            
             // Update local state
             setMatchResults(prev => prev.map(m => m.match_id === matchId ? { ...m, match_status: newStatus } : m));
+            setScheduleModal({ isOpen: false, matchId: null, status: null, date: '' });
         } catch (err) {
             console.error("Failed to update match status", err);
-            alert("Update failed. Please check permissions.");
+            showNotification("Update failed. Please check your permissions.", "error");
+        }
+    };
+
+    const updateMatchStatus = (matchId, newStatus) => {
+        if (newStatus === 'APPROVED') {
+            // Open modal to pick a date
+            const defaultDate = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16);
+            setScheduleModal({ isOpen: true, matchId, status: newStatus, date: defaultDate });
+        } else {
+            // Immediately execute for reject/complete
+            confirmStatusUpdate(matchId, newStatus);
         }
     };
 
@@ -166,7 +185,20 @@ function TCMatches() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8 space-y-8">
+                {/* Onscreen Notification Toast */}
+                {notification.show && (
+                    <div className={`m-4 p-4 rounded-lg shadow-md border flex items-center gap-3 transition-all ${
+                        notification.type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'
+                    }`}>
+                        <FontAwesomeIcon icon={notification.type === 'error' ? "fa-solid fa-circle-exclamation" : "fa-solid fa-circle-check"} className="text-lg" />
+                        <span className="font-medium text-sm">{notification.message}</span>
+                        <button onClick={() => setNotification({ show: false, message: '', type: 'success' })} className="ml-auto opacity-70 hover:opacity-100">
+                            <FontAwesomeIcon icon="fa-solid fa-xmark" />
+                        </button>
+                    </div>
+                )}
+
+                <main className="p-4 sm:p-8 space-y-8 pt-4">
                     {/* Active Recipients Section */}
                     <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="border-b border-slate-100 p-4 bg-slate-50/50">
@@ -293,6 +325,49 @@ function TCMatches() {
                     )}
                 </main>
             </div>
+
+            {/* Schedule Match Modal */}
+            {scheduleModal.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-[#042d6d]">Schedule Operation</h3>
+                            <button onClick={() => setScheduleModal({ isOpen: false, matchId: null, status: null, date: '' })} className="text-slate-400 hover:text-slate-600">
+                                <FontAwesomeIcon icon="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-slate-600">You are approving this match. Please set a scheduled operation date to notify the healthcare professionals.</p>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Scheduled Date & Time</label>
+                                <input 
+                                    type="datetime-local" 
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#042d6d] outline-none"
+                                    value={scheduleModal.date}
+                                    onChange={(e) => setScheduleModal({ ...scheduleModal, date: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button 
+                                    onClick={() => setScheduleModal({ isOpen: false, matchId: null, status: null, date: '' })}
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-slate-500 bg-slate-300 hover:bg-slate-100 rounded-lg transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={() => confirmStatusUpdate(scheduleModal.matchId, scheduleModal.status, scheduleModal.date)}
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-md transition-all"
+                                >
+                                    Confirm Approval
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

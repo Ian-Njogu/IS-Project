@@ -26,6 +26,13 @@ function TCDash() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedMatch, setSelectedMatch] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+    const [scheduledDate, setScheduledDate] = useState('');
+
+    const showNotification = (message, type = 'success') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 5000);
+    };
 
     const fetchStats = async () => {
         try {
@@ -71,16 +78,16 @@ function TCDash() {
         setIsUpdating(true);
         try {
             const payload = { match_status: selectedMatch.status };
-            if (selectedMatch.status === 'APPROVED') {
-                const date = prompt("Enter scheduled date (YYYY-MM-DD HH:MM):", new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16).replace('T', ' '));
-                if (date) payload.scheduled_date = date;
+            if (selectedMatch.status === 'APPROVED' && scheduledDate) {
+                payload.scheduled_date = scheduledDate;
             }
             await api.patch(`/matching/${selectedMatch.id}/`, payload);
             await fetchStats();
             setIsEditModalOpen(false);
+            showNotification(`Successfully updated match status to ${selectedMatch.status}`);
         } catch (err) {
             console.error('Update failed:', err);
-            alert("Failed to update status.");
+            showNotification("Failed to update status. Please check your permissions.", "error");
         } finally {
             setIsUpdating(false);
         }
@@ -158,7 +165,20 @@ function TCDash() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8 space-y-6">
+                {/* Onscreen Notification Toast */}
+                {notification.show && (
+                    <div className={`m-4 p-4 rounded-lg shadow-md border flex items-center gap-3 transition-all ${
+                        notification.type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'
+                    }`}>
+                        <FontAwesomeIcon icon={notification.type === 'error' ? "fa-solid fa-circle-exclamation" : "fa-solid fa-circle-check"} className="text-lg" />
+                        <span className="font-medium text-sm">{notification.message}</span>
+                        <button onClick={() => setNotification({ show: false, message: '', type: 'success' })} className="ml-auto opacity-70 hover:opacity-100">
+                            <FontAwesomeIcon icon="fa-solid fa-xmark" />
+                        </button>
+                    </div>
+                )}
+
+                <main className="p-4 sm:p-8 space-y-6 pt-4">
                     {/* Header Widgets */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
@@ -257,10 +277,11 @@ function TCDash() {
                                             <td className="px-6 py-4 text-sm text-slate-500 text-right">{m.date}</td>
                                             <td className="px-6 py-4 text-sm">
                                                 <button className="text-slate-400 hover:text-[#042d6d]" 
-                                                onClick={ () => 
-                                                {setSelectedMatch(m); 
-                                                setIsEditModalOpen(true);}
-                                                }>
+                                                onClick={ () => {
+                                                    setSelectedMatch(m); 
+                                                    setScheduledDate(new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16));
+                                                    setIsEditModalOpen(true);
+                                                }}>
                                                     <FontAwesomeIcon icon="fa-solid fa-pen-to-square" />
                                                 </button>
                                             </td>
@@ -310,6 +331,20 @@ function TCDash() {
                                     <option value="REJECTED">REJECTED</option>
                                 </select>
                             </div>
+
+                            {selectedMatch.status === 'APPROVED' && (
+                                <div className="mt-4">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Scheduled Date & Time</label>
+                                    <input 
+                                        type="datetime-local" 
+                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#042d6d] outline-none"
+                                        value={scheduledDate}
+                                        onChange={(e) => setScheduledDate(e.target.value)}
+                                        required
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1">Specify when the operation is expected to occur.</p>
+                                </div>
+                            )}
 
                             <div className="pt-4 flex gap-3">
                                 <button 
