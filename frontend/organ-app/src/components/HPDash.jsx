@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -45,12 +45,13 @@ function HPDash() {
     useEffect(() => {
         const fetchMatches = async () => {
             try {
-                const res = await axios.get('/matches/');
+                const res = await api.get('/matching/');
                 const today = new Date();
                 const filtered = res.data
-                .filter(match => match.status === 'APPROVED' && new Date(match.operation_date) >= today)
-                .sort((x, y) => new Date(x.scheduled_date) - new Date(y.scheduled_date))
-                .slice(0, 2);
+                .filter(m => m.match_status === 'APPROVED')
+                .filter(m => !m.scheduled_date || new Date(m.scheduled_date) >= today)
+                .sort((x, y) => new Date(x.scheduled_date || x.match_date) - new Date(y.scheduled_date || y.match_date))
+                .slice(0, 5);
 
                 setUpcomingMatches(filtered);
             } catch (err) {
@@ -161,7 +162,7 @@ function HPDash() {
                                                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                                                         <div className="flex items-center gap-1.5 text-sm text-slate-500">
                                                             <FontAwesomeIcon icon="fa-regular fa-calendar" className="opacity-70" />
-                                                            <span>{new Date(op.operation_date).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+                                                            <span>Scheduled: <span className="font-semibold text-slate-700">{op.scheduled_date ? new Date(op.scheduled_date).toLocaleString() : 'TBD'}</span></span>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-sm text-slate-500">
                                                             <FontAwesomeIcon icon="fa-solid fa-user-injured" className="opacity-70" />
@@ -173,7 +174,7 @@ function HPDash() {
                                     
                                             <div className="flex items-center">
                                                 <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 uppercase tracking-tighter">
-                                                    Approved
+                                                    {op.match_status}
                                                 </span>
                                             </div>
                                         </div>

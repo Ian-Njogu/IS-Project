@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -45,17 +45,11 @@ function HPHistory() {
     useEffect(() => {
         const fetchHistory = async () => {
           try {
-            const response = await axios.get('http://localhost:8000/api/matches/');
-            const today = new Date();
-
+            const response = await api.get('/matching/');
             const filtered = response.data
-              .filter(match => 
-                match.status === 'COMPLETED' || 
-                new Date(match.operation_date) < today
-              )
-              // Sort by date descending (most recent past operation first)
-              .sort((a, b) => new Date(b.operation_date) - new Date(a.operation_date))
-              .slice(0, 5);
+              .filter(m => m.match_status === 'COMPLETED' || m.match_status === 'REJECTED')
+              .sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
+              .slice(0, 10);
 
             setHistory(filtered);
           } catch (error) {
@@ -172,14 +166,10 @@ function HPHistory() {
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {history.map((op) => (
-                                                <tr key={op.id} className="hover:bg-slate-50 transition-colors">
+                                                <tr key={op.match_id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-4">
                                                         <span className="text-sm font-semibold text-slate-700">
-                                                            {new Date(op.operation_date).toLocaleDateString(undefined, { 
-                                                                year: 'numeric', 
-                                                                month: 'short', 
-                                                                day: 'numeric' 
-                                                            })}
+                                                            {new Date(op.match_date).toLocaleDateString()}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4">
@@ -189,11 +179,11 @@ function HPHistory() {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter border ${
-                                                            op.status === 'COMPLETED' 
+                                                            op.match_status === 'COMPLETED' 
                                                             ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                                                            : 'bg-green-50 text-green-700 border-green-100'
+                                                            : 'bg-red-50 text-red-700 border-red-100'
                                                         }`}>
-                                                            {op.status}
+                                                            {op.match_status}
                                                         </span>
                                                     </td>
                                                 </tr>
