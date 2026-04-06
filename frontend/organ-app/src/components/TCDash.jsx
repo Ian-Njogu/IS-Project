@@ -23,6 +23,7 @@ function TCDash() {
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
     const [stats, setStats] = useState(null);
+    const [displayName, setDisplayName] = useState('User');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -45,6 +46,14 @@ function TCDash() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []);
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -81,15 +90,22 @@ function TCDash() {
                 </nav>
 
                 <div className="p-4 mt-auto">
-                    {/* User Actions & Notifications */}
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full border-2 border-slate-200 overflow-hidden shrink-0">
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">TC Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>

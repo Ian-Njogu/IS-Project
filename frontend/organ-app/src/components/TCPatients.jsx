@@ -21,6 +21,7 @@ function TCPatients() {
 
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [displayName, setDisplayName] = useState('User');
     
     const [formData, setFormData] = useState({
         name: '',
@@ -37,7 +38,6 @@ function TCPatients() {
 
     const location = useLocation();
     const mobileMenuRef = useRef(null);
-    const mobileButtonRef = useRef(null);
 
     // Calculate Min Date for Lab Test (2 weeks ago)
     const minLabDate = () => {
@@ -93,6 +93,14 @@ function TCPatients() {
         }
     };
 
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []);
+
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
             {/* Sidebar */}
@@ -135,8 +143,16 @@ function TCPatients() {
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">TC Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>
@@ -156,7 +172,7 @@ function TCPatients() {
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                                 <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#042d6d] outline-none" placeholder="John Doe" />
-                            </div>
+                            </div> 
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Patient Type</label>

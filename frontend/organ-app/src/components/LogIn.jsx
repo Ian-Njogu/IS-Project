@@ -36,11 +36,13 @@ function LogIn() {
       localStorage.setItem('refresh_token', refresh);
 
       const userResponse = await api.get('/auth/me/');
+      const {role, name} = userResponse.data;
 
       const userRole = userResponse.data.role;
 
       // store user role locally for easy frontend usage
       localStorage.setItem('user_role', userRole);
+      localStorage.setItem('user_name', name);
 
       // redirect based on role
       if (userRole === 'COORDINATOR') {
