@@ -10,7 +10,7 @@ function Register() {
     hosName: '',
     email: '',
     password: '',
-    name: '', // Added name field
+    name: '', 
   });
 
   const handleChange = (e) => {
@@ -25,7 +25,6 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    // Map frontend dropdown roles to exact backend choices
     let backendRole = '';
     if (formData.role === 'tc') backendRole = 'COORDINATOR';
     if (formData.role === 'hp') backendRole = 'HEALTHCARE_PROFESSIONAL';
@@ -36,15 +35,14 @@ function Register() {
     }
 
     try {
-      await api.post('/auth/register/', {
+      await api.post('auth/register/', {
         role: backendRole,
         hospital_name: formData.hosName,
         email: formData.email,
         password: formData.password,
-        name: formData.name || formData.email.split('@')[0], // Use email prefix if name not provided
+        name: formData.name || formData.email.split('@')[0], 
       });
 
-      // Redirect to login after successful registration
       navigate('/login');
     } catch (err) {
       console.error(err);

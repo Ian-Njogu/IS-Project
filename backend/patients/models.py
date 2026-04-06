@@ -10,7 +10,7 @@ class Patient(TimeStampedModel):
         related_name='patients'
     )
     name = models.CharField(max_length=255, default='Unknown Patient')
-    blood_type = models.CharField(max_length=10) # Choices: A+, O-, etc.
+    blood_type = models.CharField(max_length=10) 
     organ_type = models.CharField(max_length=100)
     medical_history = models.TextField()
     urgency_level = models.IntegerField(help_text="Higher number = more urgent", default=1)
