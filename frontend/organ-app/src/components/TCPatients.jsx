@@ -17,7 +17,7 @@ const navigation = [
 ];
 
 function TCPatients() {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mobileMenuOpen] = useState(false);
 
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -37,7 +37,6 @@ function TCPatients() {
 
     const location = useLocation();
     const mobileMenuRef = useRef(null);
-    const mobileButtonRef = useRef(null);
 
     // Calculate Min Date for Lab Test (2 weeks ago)
     const minLabDate = () => {
@@ -158,7 +157,7 @@ function TCPatients() {
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Blood Group</label>
-                                <select value={formData.blood_type} onChange={(e) => setFormData({...formData, blood_type: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-sm">
+                                <select value={formData.blood_group} onChange={(e) => setFormData({...formData, blood_group: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-sm">
                                     {['A', 'B', 'AB', 'O'].map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
