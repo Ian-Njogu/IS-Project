@@ -21,6 +21,7 @@ function HPHistory() {
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
     const [displayName, setDisplayName] = useState('User');
+    const [pastMatches, setpastMatches] = useState([]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -38,6 +39,24 @@ function HPHistory() {
         if (savedName) {
             setDisplayName(savedName);
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const res = await api.get('/matches/');
+                const allMatches = res.data;
+                const history = allMatches
+                .filter(match => match.status === 'COMPLETED' || match.status === 'SUCCESSFUL')
+                .sort((x, y) => new Date(x.scheduled_date) - new Date(y.scheduled_date))
+                .slice(0, 5);
+
+                setPastMatches(history);
+            } catch (err) {
+                console.error('Failed to fetch operation history', err);
+            }
+        };
+        fetchHistory();
     }, []);
 
     return (

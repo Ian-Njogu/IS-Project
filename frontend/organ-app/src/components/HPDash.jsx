@@ -21,6 +21,7 @@ function HPDash() {
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
     const [displayName, setDisplayName] = useState('User');
+    const [upcomingMatches, setUpcomingMatches] = useState([]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -38,6 +39,24 @@ function HPDash() {
         if (savedName) {
             setDisplayName(savedName);
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchMatches = async () => {
+            try {
+                const res = await api.get('/matches/');
+                const allMatches = res.data;
+                const filtered = allMatches
+                .filter(match => match.status === 'SCHEDULED' || match.status === 'PENDING')
+                .sort((x, y) => new Date(x.scheduled_date) - new Date(y.scheduled_date))
+                .slice(0, 2);
+
+                setUpcomingMatches(filtered);
+            } catch (err) {
+                console.error('Failed to fetch matches', err);
+            }
+        };
+        fetchMatches();
     }, []);
 
     return (
