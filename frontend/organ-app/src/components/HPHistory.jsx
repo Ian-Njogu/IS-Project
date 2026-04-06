@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import axios from 'axios';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -10,7 +11,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
+    { name: 'Dashboard', href: '/hp', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
     { name: 'History', href: '/history', icon: 'fa-solid fa-clock-rotate-left' }, // show the past 5 operations
 ];
 
@@ -20,6 +21,8 @@ function HPHistory() {
 
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
+    const [displayName, setDisplayName] = useState('User');
+    const [history, setHistory] = useState([]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -30,6 +33,37 @@ function HPHistory() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+          try {
+            const response = await axios.get('http://localhost:8000/api/matches/');
+            const today = new Date();
+
+            const filtered = response.data
+              .filter(match => 
+                match.status === 'COMPLETED' || 
+                new Date(match.operation_date) < today
+              )
+              // Sort by date descending (most recent past operation first)
+              .sort((a, b) => new Date(b.operation_date) - new Date(a.operation_date))
+              .slice(0, 5);
+
+            setHistory(filtered);
+          } catch (error) {
+            console.error("Error fetching history:", error);
+          }
+        };
+        fetchHistory();
+    }, []);
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -73,8 +107,16 @@ function HPHistory() {
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">HP Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>
@@ -97,8 +139,79 @@ function HPHistory() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8">
-                    <div className="text-slate-400 italic">No content provided for this view.</div>
+                <main className="p-6 lg:p-8 flex-1">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header Section */}
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Operation History</h2>
+                        </div>
+
+                        {/* Content Card */}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            {history.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-200">
+                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                    <div className="flex items-center gap-2">
+                                                        <FontAwesomeIcon icon="fa-regular fa-calendar" className="opacity-70" />
+                                                        Date
+                                                    </div>
+                                                </th>
+                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                    <div className="flex items-center gap-2">
+                                                        <FontAwesomeIcon icon="fa-solid fa-dna" className="opacity-70" />
+                                                        Organ
+                                                    </div>
+                                                </th>
+                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                    Status
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {history.map((op) => (
+                                                <tr key={op.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-sm font-semibold text-slate-700">
+                                                            {new Date(op.operation_date).toLocaleDateString(undefined, { 
+                                                                year: 'numeric', 
+                                                                month: 'short', 
+                                                                day: 'numeric' 
+                                                            })}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-sm font-bold text-[#042d6d]">
+                                                            {op.organ} Transplant
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter border ${
+                                                            op.status === 'COMPLETED' 
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-100' 
+                                                            : 'bg-green-50 text-green-700 border-green-100'
+                                                        }`}>
+                                                            {op.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                /* Empty State */
+                                <div className="p-12 text-center">
+                                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                        <FontAwesomeIcon icon="fa-solid fa-clock-rotate-left" className="text-2xl" />
+                                    </div>
+                                    <p className="text-slate-500 font-medium">No operation history found.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </main>
             </div>
         </div>

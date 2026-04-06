@@ -21,6 +21,7 @@ function TCPatients() {
 
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [displayName, setDisplayName] = useState('User');
     
     const [formData, setFormData] = useState({
         name: '',
@@ -92,24 +93,72 @@ function TCPatients() {
         }
     };
 
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []);
+
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
             {/* Sidebar */}
-            <aside ref={mobileMenuRef} className={`fixed top-0 left-0 z-50 h-screen w-64 flex flex-col bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <aside
+                ref={mobileMenuRef}
+                className={`fixed top-0 left-0 z-50 h-screen w-64 flex flex-col bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+            >
                 <div className="p-6 flex justify-between items-center">
                     <div>
-                        <h1 className="font-extrabold text-xl tracking-tighter text-[#042d6d]">TC Dashboard</h1>
+                        <h1 className="font-extrabold text-xl tracking-tighter text-[#042d6d]">Transplant Coordinator Dashboard</h1>
                         <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mt-1">Organ Donation Matching System</p>
                     </div>
                 </div>
-                <nav className="flex-1 px-3 space-y-1">
-                    {navigation.map((item) => (
-                        <Link key={item.name} to={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${location.pathname === item.href ? 'bg-[#042d6d] text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <FontAwesomeIcon icon={item.icon} className="w-5 h-5 opacity-75" />
-                            {item.name}
-                        </Link>
-                    ))}
+
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+                    {navigation.map((item) => {
+                        const isCurrent = location.pathname === item.href;
+                        return (
+                            <Link
+                                key={item.name}
+                                to={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${isCurrent
+                                    ? 'bg-[#042d6d] text-white shadow-md'
+                                    : 'text-slate-500 hover:bg-slate-50 hover:text-[#042d6d]'
+                                    }`}
+                            >
+                                <FontAwesomeIcon icon={item.icon} className="w-5 h-5 opacity-75" />
+                                {item.name}
+                            </Link>
+                        );
+                    })}
                 </nav>
+
+                <div className="p-4 mt-auto">
+                    {/* User Actions & Notifications */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full border-2 border-slate-200 overflow-hidden shrink-0">
+                                <img src="src/assets/admin.png" alt="pfp" />
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
+                                    Log Out
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </aside>
 
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
@@ -123,7 +172,7 @@ function TCPatients() {
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                                 <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[#042d6d] outline-none" placeholder="John Doe" />
-                            </div>
+                            </div> 
 
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Patient Type</label>
@@ -193,10 +242,8 @@ function TCPatients() {
                                         <th className="px-6 py-4 font-bold">Name</th>
                                         <th className="px-6 py-4 font-bold">Type</th>
                                         <th className="px-6 py-4 font-bold">Organ</th>
-                                        <th className="px-6 py-4 font-bold">Medical State</th>
                                         <th className="px-6 py-4 font-bold">Blood Group</th>
-                                        <th className="px-6 py-4 font-bold">Rh Factor</th>
-                                        <th className="px-6 py-4 font-bold">Actions</th>
+                                        <th className="px-6 py-4 font-bold">Medical State</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -211,9 +258,6 @@ function TCPatients() {
                                             <td className="px-6 py-4 text-sm text-slate-600">{p.organ}</td>
                                             <td className="px-6 py-4 text-sm font-mono">{p.blood_type}</td>
                                             <td className="px-6 py-4 text-sm text-slate-600">{p.medical_state}</td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <button className="text-slate-400 hover:text-[#042d6d]"><FontAwesomeIcon icon="fa-solid fa-pen-to-square" /></button>
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

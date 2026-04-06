@@ -23,7 +23,7 @@ function LogIn() {
     setError('');
 
     try {
-      // 1. Get JWT Tokens
+      // create token
       const tokenResponse = await api.post('/auth/token/', {
         email: formData.email,
         password: formData.password,
@@ -31,19 +31,20 @@ function LogIn() {
 
       const { access, refresh } = tokenResponse.data;
 
-      // Store tokens
+      // store tokens
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
 
-      // 2. Fetch User Details to get the role
       const userResponse = await api.get('/auth/me/');
+      const {role, name} = userResponse.data;
 
       const userRole = userResponse.data.role;
 
-      // Store user role locally for easy frontend usage
+      // store user role locally for easy frontend usage
       localStorage.setItem('user_role', userRole);
+      localStorage.setItem('user_name', name);
 
-      // 3. Redirect based on role
+      // redirect based on role
       if (userRole === 'COORDINATOR') {
         navigate('/tc');
       } else if (userRole === 'HEALTHCARE_PROFESSIONAL') {
@@ -51,7 +52,7 @@ function LogIn() {
       } else if (userRole === 'ADMINISTRATOR') {
         navigate('/admin');
       } else {
-        navigate('/'); // Default
+        navigate('/');
       }
     } catch (err) {
       console.error(err);

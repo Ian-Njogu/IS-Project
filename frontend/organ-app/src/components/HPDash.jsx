@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import axios from 'axios';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -10,7 +11,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
+    { name: 'Dashboard', href: '/hp', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
     { name: 'History', href: '/history', icon: 'fa-solid fa-clock-rotate-left' }, // show the past 5 operations
 ];
 
@@ -20,6 +21,8 @@ function HPDash() {
 
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
+    const [displayName, setDisplayName] = useState('User');
+    const [upcomingMatches, setUpcomingMatches] = useState([]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -30,6 +33,32 @@ function HPDash() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []); 
+
+    useEffect(() => {
+        const fetchMatches = async () => {
+            try {
+                const res = await axios.get('/matches/');
+                const today = new Date();
+                const filtered = res.data
+                .filter(match => match.status === 'APPROVED' && new Date(match.operation_date) >= today)
+                .sort((x, y) => new Date(x.scheduled_date) - new Date(y.scheduled_date))
+                .slice(0, 2);
+
+                setUpcomingMatches(filtered);
+            } catch (err) {
+                console.error('Failed to fetch upcoming operations', err);
+            }
+        };
+        fetchMatches();
+    }, []);
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -73,8 +102,16 @@ function HPDash() {
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">HP Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>
@@ -84,7 +121,6 @@ function HPDash() {
             </aside>
 
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-
                 {/* Smaller screen navbar */}
                 <div className="lg:hidden flex items-center justify-between bg-[#042d6d] p-4 text-white z-40 sticky top-0 shadow-md">
                     <span className="font-extrabold text-lg tracking-tighter">Organ Donation Matching System</span>
@@ -97,8 +133,62 @@ function HPDash() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8">
-                    <div className="text-slate-400 italic">No content provided for this view.</div>
+                <main className="p-6 lg:p-8 flex-1">
+                    <div className="max-w-4xl">
+                        {/* Header Section */}
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Upcoming Operations</h2>
+                        </div>
+
+                        {/* Content Card */}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            {upcomingMatches.length > 0 ? (
+                                <div className="divide-y divide-slate-100">
+                                    {upcomingMatches.map((op) => (
+                                        <div 
+                                            key={op.id} 
+                                            className="p-5 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-[#042d6d] shrink-0">
+                                                    <FontAwesomeIcon icon="fa-solid fa-hospital-user" className="text-lg" />
+                                                </div>
+
+                                                <div>
+                                                    <h3 className="font-bold text-slate-800 text-lg">
+                                                        {op.organ} <span className="text-[#042d6d] font-medium text-sm ml-1">Transplant</span>
+                                                    </h3>
+                                                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                                                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                                                            <FontAwesomeIcon icon="fa-regular fa-calendar" className="opacity-70" />
+                                                            <span>{new Date(op.operation_date).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                                                            <FontAwesomeIcon icon="fa-solid fa-user-injured" className="opacity-70" />
+                                                            <span>Patient: <span className="font-semibold text-slate-700">{op.recipient_name}</span></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                    
+                                            <div className="flex items-center">
+                                                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 uppercase tracking-tighter">
+                                                    Approved
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-12 text-center">
+                                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                        <FontAwesomeIcon icon="fa-solid fa-calendar-xmark" className="text-2xl" />
+                                    </div>
+                                    <p className="text-slate-500 font-medium">No upcoming operations scheduled.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </main>
             </div>
         </div>

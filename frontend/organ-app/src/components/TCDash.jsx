@@ -11,7 +11,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/tc', icon: 'fa-solid fa-table-columns' }, 
+    { name: 'Dashboard', href: '/tc', icon: ['fas', 'table-columns'] }, 
     { name: 'Register Patients', href: '/patients', icon: 'fa-solid fa-user-plus' }, 
     { name: 'Matching Results', href: '/matches', icon: 'fa-solid fa-table-list' }, 
 ];
@@ -19,22 +19,22 @@ const navigation = [
 function TCDash() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
-
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
     const [stats, setStats] = useState(null);
+    const [displayName, setDisplayName] = useState('User');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedMatch, setSelectedMatch] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await api.get('/tc/stats/');
-                setStats(res.data);
-            } catch (err) {
-                console.error("Error fetching stats:", err);
-            }
-        };
-        fetchStats();
-    }, []);
+    const fetchStats = async () => {
+        try {
+            const res = await api.get('/tc/stats/');
+            setStats(res.data);
+        } catch (err) {
+            console.error("Error fetching stats:", err);
+        }
+    };
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -45,6 +45,41 @@ function TCDash() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+
+        fetchStats();
+    }, []);
+
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (mobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(e.target) && !mobileButtonRef.current.contains(e.target)) {
+                setMobileMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [mobileMenuOpen]);
+
+    const handleUpdateStatus = async (e) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        try {
+            await api.patch(`/matches/${selectedMatch.id}/`, {status: selectedMatch.status});
+            await fetchStats();
+            setIsEditModalOpen(false);
+        } catch (err) {
+            console.error('Update failed:', err);
+            alert("Failed to update status.");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -81,15 +116,22 @@ function TCDash() {
                 </nav>
 
                 <div className="p-4 mt-auto">
-                    {/* User Actions & Notifications */}
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                         <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full border-2 border-slate-200 overflow-hidden shrink-0">
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">TC Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>
@@ -99,7 +141,6 @@ function TCDash() {
             </aside>
 
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-
                 {/* Smaller screen navbar */}
                 <div className="lg:hidden flex items-center justify-between bg-[#042d6d] p-4 text-white z-40 sticky top-0 shadow-md">
                     <span className="font-extrabold text-lg tracking-tighter">Organ Donation Matching System</span>
@@ -137,7 +178,7 @@ function TCDash() {
 
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
                             <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shrink-0">
-                                <FontAwesomeIcon icon="fa-solid fa-handshake" />
+                                <FontAwesomeIcon icon={['fas', 'handshake']} />
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Pending Matches</p>
@@ -185,9 +226,10 @@ function TCDash() {
                                         <th className="px-6 py-4 font-bold">Score</th>
                                         <th className="px-6 py-4 font-bold">Status</th>
                                         <th className="px-6 py-4 font-bold text-right">Date</th>
+                                        <th className="px-6 py-4 font-bold">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className='divide-y divide-slate-100'>
                                     {stats?.recent_matches?.map((m, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4 text-sm font-mono text-slate-500">#{m.id}</td>
@@ -199,8 +241,8 @@ function TCDash() {
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                                                    m.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                                    m.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
+                                                    m.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                    m.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
                                                     m.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
                                                     'bg-yellow-100 text-yellow-700'
                                                 }`}>
@@ -208,6 +250,15 @@ function TCDash() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-slate-500 text-right">{m.date}</td>
+                                            <td className="px-6 py-4 text-sm">
+                                                <button className="text-slate-400 hover:text-[#042d6d]" 
+                                                onClick={ () => 
+                                                {setSelectedMatch(m); 
+                                                setIsEditModalOpen(true);}
+                                                }>
+                                                    <FontAwesomeIcon icon="fa-solid fa-pen-to-square" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                     {(!stats?.recent_matches || stats.recent_matches.length === 0) && (
@@ -223,6 +274,58 @@ function TCDash() {
                     </section>
                 </main>
             </div>
+            
+            {isEditModalOpen && selectedMatch && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-[#042d6d]">Update Match Status</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <FontAwesomeIcon icon="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleUpdateStatus} className="p-6 space-y-4">
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Editing Match</p>
+                                <p className="text-sm font-medium text-slate-700">
+                                    {selectedMatch.donor_name} → {selectedMatch.recipient_name}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Matching Phase</label>
+                                <select 
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#042d6d] outline-none"
+                                    value={selectedMatch.status}
+                                    onChange={(e) => setSelectedMatch({...selectedMatch, status: e.target.value})}
+                                >
+                                    <option value="PENDING">PENDING</option>
+                                    <option value="APPROVED">APPROVED</option>
+                                    <option value="REJECTED">REJECTED</option>
+                                </select>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-slate-500 bg-slate-300 hover:bg-slate-100 rounded-lg transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-white bg-[#042d6d] hover:bg-[#154696] rounded-lg shadow-md transition-all disabled:opacity-50"
+                                >
+                                    {isUpdating ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
