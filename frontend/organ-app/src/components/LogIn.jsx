@@ -107,13 +107,6 @@ function LogIn() {
           >
             Log In
           </button>
-
-          <p className="text-sm text-center text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-[#042d6d] hover:underline">
-              Sign up
-            </Link>
-          </p>
         </form>
       </div>
     </div>

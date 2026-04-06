@@ -60,7 +60,7 @@ function Register() {
           className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg space-y-6"
         >
           <h2 className="text-2xl font-bold text-center text-[#042d6d]">
-            Create an account
+            Organ Donation Matching System
           </h2>
 
           {error && <p className="text-red-500 text-center">{error}</p>}

@@ -1,8 +1,8 @@
 import AdminDash from './components/AdminDash'
 import AdminReports from './components/AdminReports'
 import AdminUsers from './components/AdminUsers'
-import Founders from './components/HomeFounders'
-import Home from './components/Home'
+// import Founders from './components/HomeFounders'
+// import Home from './components/Home'
 import HPDash from './components/HPDash'
 import HPHistory from './components/HPHistory'
 import LogIn from './components/LogIn'
@@ -17,12 +17,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<Home />} />
+        {/* <Route path='/' element={<Home />} /> */}
         <Route path='/admin' element={<AdminDash />} />
         <Route path='/reports' element={<AdminReports />} />
         <Route path='/users' element={<AdminUsers />} />
-        <Route path='/founders' element={<Founders />} />
-        <Route path='/register' element={<Register />} />
+        {/* <Route path='/founders' element={<Founders />} /> */}
+        <Route path='/' element={<Register />} />
         <Route path='/login' element={<LogIn />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/hp' element={<HPDash />} />
