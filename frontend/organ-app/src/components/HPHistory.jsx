@@ -10,7 +10,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
+    { name: 'Dashboard', href: '/hp', icon: 'fa-solid fa-table-columns' }, //only show the 2 most recent upcoming operations
     { name: 'History', href: '/history', icon: 'fa-solid fa-clock-rotate-left' }, // show the past 5 operations
 ];
 
@@ -20,6 +20,7 @@ function HPHistory() {
 
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
+    const [displayName, setDisplayName] = useState('User');
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -30,6 +31,14 @@ function HPHistory() {
         document.addEventListener('click', handleClick);
         return () => document.removeEventListener('click', handleClick);
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const savedName = localStorage.getItem('user_name');
+
+        if (savedName) {
+            setDisplayName(savedName);
+        }
+    }, []);
 
     return (
         <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -73,8 +82,16 @@ function HPHistory() {
                                 <img src="src/assets/admin.png" alt="pfp" />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-slate-700 truncate">HP Name</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <span className="text-xs font-bold text-slate-700 truncate">{displayName}</span>
+                                <Link 
+                                to="/" 
+                                className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                onClick={() => {
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user_role');
+                                    localStorage.removeItem('user_name');
+                                }}>
                                     Log Out
                                 </Link>
                             </div>
