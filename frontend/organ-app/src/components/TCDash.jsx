@@ -70,7 +70,12 @@ function TCDash() {
         e.preventDefault();
         setIsUpdating(true);
         try {
-            await api.patch(`/matches/${selectedMatch.id}/`, {status: selectedMatch.status});
+            const payload = { match_status: selectedMatch.status };
+            if (selectedMatch.status === 'APPROVED') {
+                const date = prompt("Enter scheduled date (YYYY-MM-DD HH:MM):", new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16).replace('T', ' '));
+                if (date) payload.scheduled_date = date;
+            }
+            await api.patch(`/matching/${selectedMatch.id}/`, payload);
             await fetchStats();
             setIsEditModalOpen(false);
         } catch (err) {

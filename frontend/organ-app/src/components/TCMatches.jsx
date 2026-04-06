@@ -67,6 +67,23 @@ function TCMatches() {
         }
     };
 
+    const updateMatchStatus = async (matchId, newStatus) => {
+        try {
+            const payload = { match_status: newStatus };
+            if (newStatus === 'APPROVED') {
+                const date = prompt("Enter scheduled date (YYYY-MM-DD HH:MM):", new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16).replace('T', ' '));
+                if (date) payload.scheduled_date = date;
+            }
+            await api.patch(`/matching/${matchId}/`, payload);
+            alert(`Match status updated to ${newStatus}`);
+            // Update local state
+            setMatchResults(prev => prev.map(m => m.match_id === matchId ? { ...m, match_status: newStatus } : m));
+        } catch (err) {
+            console.error("Failed to update match status", err);
+            alert("Update failed. Please check permissions.");
+        }
+    };
+
     useEffect(() => {
         const savedName = localStorage.getItem('user_name');
 
@@ -226,8 +243,37 @@ function TCMatches() {
                                                         <span className="text-sm font-bold text-green-700">{m.compatibility_score}%</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm">
-                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700">
+                                                <td className="px-6 py-4 text-sm flex items-center gap-2">
+                                                    {m.match_status === 'PENDING' && (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => updateMatchStatus(m.match_id, 'APPROVED')}
+                                                                className="px-2 py-1 bg-green-600 text-white rounded text-[10px] font-bold hover:bg-green-700"
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => updateMatchStatus(m.match_id, 'REJECTED')}
+                                                                className="px-2 py-1 bg-red-600 text-white rounded text-[10px] font-bold hover:bg-red-700"
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {m.match_status === 'APPROVED' && (
+                                                        <button 
+                                                            onClick={() => updateMatchStatus(m.match_id, 'COMPLETED')}
+                                                            className="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700"
+                                                        >
+                                                            Complete
+                                                        </button>
+                                                    )}
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${
+                                                        m.match_status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
+                                                        m.match_status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                                        m.match_status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
                                                         {m.match_status}
                                                     </span>
                                                 </td>

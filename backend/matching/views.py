@@ -4,16 +4,29 @@ from rest_framework.response import Response
 from .models import Match
 from patients.models import Recipient
 from .serializers import MatchSerializer
-from accounts.permissions import IsTransplantCoordinator
-from .services import OrganMatchingService
+from accounts.permissions import IsTransplantCoordinator, IsHealthcareProfessional
 
 class MatchViewSet(viewsets.ModelViewSet):
     serializer_class = MatchSerializer
-    permission_classes = [IsTransplantCoordinator]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsTransplantCoordinator | IsHealthcareProfessional]
+        else:
+            permission_classes = [IsTransplantCoordinator]
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        if self.request.user.hospital:
-            return Match.objects.filter(recipient__recipient_id__hospital=self.request.user.hospital)
+        user = self.request.user
+        if not user.is_authenticated:
+            return Match.objects.none()
+            
+        if user.hospital:
+            # Show matches where the donor or recipient is from the same hospital
+            return Match.objects.filter(
+                models.Q(recipient__recipient_id__hospital=user.hospital) |
+                models.Q(donor__donor_id__hospital=user.hospital)
+            ).distinct()
         return Match.objects.all()
 
     @action(detail=False, methods=['post'])
