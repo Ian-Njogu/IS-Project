@@ -244,7 +244,6 @@ function TCPatients() {
                                         <th className="px-6 py-4 font-bold">Organ</th>
                                         <th className="px-6 py-4 font-bold">Blood Group</th>
                                         <th className="px-6 py-4 font-bold">Medical State</th>
-                                        <th className="px-6 py-4 font-bold">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -259,9 +258,6 @@ function TCPatients() {
                                             <td className="px-6 py-4 text-sm text-slate-600">{p.organ}</td>
                                             <td className="px-6 py-4 text-sm font-mono">{p.blood_type}</td>
                                             <td className="px-6 py-4 text-sm text-slate-600">{p.medical_state}</td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <button className="text-slate-400 hover:text-[#042d6d]"><FontAwesomeIcon icon="fa-solid fa-pen-to-square" /></button>
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
