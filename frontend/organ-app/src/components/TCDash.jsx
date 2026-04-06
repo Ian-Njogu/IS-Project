@@ -37,10 +37,6 @@ function TCDash() {
     };
 
     useEffect(() => {
-        fetchStats();
-    }, []);
-
-    useEffect(() => {
         const handleClick = (event) => {
             if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) && !mobileButtonRef.current.contains(event.target)) {
                 setMobileMenuOpen(false);
@@ -56,6 +52,8 @@ function TCDash() {
         if (savedName) {
             setDisplayName(savedName);
         }
+
+        fetchStats();
     }, []);
 
     useEffect(() => {
@@ -72,7 +70,7 @@ function TCDash() {
         e.preventDefault();
         setIsUpdating(true);
         try {
-            await api.patch(`/matches/${selectedMatch.id}`, {status: selectedMatch.status});
+            await api.patch(`/matches/${selectedMatch.id}/`, {status: selectedMatch.status});
             await fetchStats();
             setIsEditModalOpen(false);
         } catch (err) {
@@ -143,7 +141,6 @@ function TCDash() {
             </aside>
 
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-
                 {/* Smaller screen navbar */}
                 <div className="lg:hidden flex items-center justify-between bg-[#042d6d] p-4 text-white z-40 sticky top-0 shadow-md">
                     <span className="font-extrabold text-lg tracking-tighter">Organ Donation Matching System</span>
@@ -232,7 +229,7 @@ function TCDash() {
                                         <th className="px-6 py-4 font-bold">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className='divide-y divide-slate-100'>
                                     {stats?.recent_matches?.map((m, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4 text-sm font-mono text-slate-500">#{m.id}</td>
@@ -244,8 +241,8 @@ function TCDash() {
                                             </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                                                    m.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                                    m.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
+                                                    m.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                    m.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
                                                     m.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
                                                     'bg-yellow-100 text-yellow-700'
                                                 }`}>
@@ -256,7 +253,7 @@ function TCDash() {
                                             <td className="px-6 py-4 text-sm">
                                                 <button className="text-slate-400 hover:text-[#042d6d]" 
                                                 onClick={ () => 
-                                                {setSelectedMatch(match); 
+                                                {setSelectedMatch(m); 
                                                 setIsEditModalOpen(true);}
                                                 }>
                                                     <FontAwesomeIcon icon="fa-solid fa-pen-to-square" />
@@ -303,19 +300,9 @@ function TCDash() {
                                     value={selectedMatch.status}
                                     onChange={(e) => setSelectedMatch({...selectedMatch, status: e.target.value})}
                                 >
-                                    <optgroup label="1. The Matching Phase">
-                                        <option value="PENDING">PENDING</option>
-                                        <option value="UNDER_REVIEW">UNDER_REVIEW</option>
-                                        <option value="MATCHED">MATCHED</option>
-                                    </optgroup>
-                                    <optgroup label="2. Clinical & Logistics">
-                                        <option value="SCHEDULED">SCHEDULED</option>
-                                        <option value="IN_TRANSIT">IN_TRANSIT</option>
-                                    </optgroup>
-                                    <optgroup label="3. Outcome">
-                                        <option value="COMPLETED">COMPLETED</option>
-                                        <option value="CANCELLED">CANCELLED</option>
-                                    </optgroup>
+                                    <option value="PENDING">PENDING</option>
+                                    <option value="APPROVED">APPROVED</option>
+                                    <option value="REJECTED">REJECTED</option>
                                 </select>
                             </div>
 
@@ -323,7 +310,7 @@ function TCDash() {
                                 <button 
                                     type="button"
                                     onClick={() => setIsEditModalOpen(false)}
-                                    className="flex-1 px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-all"
+                                    className="flex-1 px-4 py-2 text-sm font-bold text-slate-500 bg-slate-300 hover:bg-slate-100 rounded-lg transition-all"
                                 >
                                     Cancel
                                 </button>

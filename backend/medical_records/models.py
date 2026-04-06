@@ -9,7 +9,6 @@ class MedicalRecord(TimeStampedModel):
         ('BLOOD_WORK', 'Detailed Blood Analysis'),
         ('HLA_TYPING', 'HLA Tissue Typing'),
         ('CROSSMATCH', 'Crossmatch Test'),
-        ('IMAGING', 'Radiology/Imaging'),
     )
 
     record_id = models.AutoField(primary_key=True)
