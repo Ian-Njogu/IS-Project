@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import api from '../services/api';
 /* import all the icons and dependencies*/
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -21,6 +22,19 @@ function AdminDash() {
 
     const mobileMenuRef = useRef(null);
     const mobileButtonRef = useRef(null);
+    const [stats, setStats] = useState(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/reports/operations/');
+                setStats(res.data);
+            } catch (err) {
+                console.error("Error fetching admin stats:", err);
+            }
+        };
+        fetchStats();
+    }, []);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -75,7 +89,16 @@ function AdminDash() {
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                                 <span className="text-xs font-bold text-slate-700 truncate">Administrator</span>
-                                <Link to="/" className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit">
+                                <Link 
+                                    to="/" 
+                                    className="px-3 py-1.5 bg-[#042d6d] text-white rounded-md text-[10px] font-bold shadow-sm hover:bg-[#154696] hover:shadow transition-all whitespace-nowrap w-fit"
+                                    onClick={() => {
+                                        localStorage.removeItem('access_token');
+                                        localStorage.removeItem('refresh_token');
+                                        localStorage.removeItem('user_role');
+                                        localStorage.removeItem('user_name');
+                                    }}
+                                >
                                     Log Out
                                 </Link>
                             </div>
@@ -98,8 +121,61 @@ function AdminDash() {
                     </button>
                 </div>
 
-                <main className="p-4 sm:p-8">
-                    <div className="text-slate-400 italic">No content provided for this view.</div>
+                <main className="p-4 sm:p-8 space-y-6">
+                    {/* Header Widgets */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-[#042d6d] transition-colors">
+                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl shrink-0">
+                                <FontAwesomeIcon icon="fa-solid fa-hand-holding-heart" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Donors</p>
+                                <p className="text-2xl font-extrabold text-[#042d6d]">{stats?.total_donors || 0}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-[#042d6d] transition-colors">
+                            <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl shrink-0">
+                                <FontAwesomeIcon icon="fa-solid fa-bed-pulse" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Recipients</p>
+                                <p className="text-2xl font-extrabold text-[#042d6d]">{stats?.total_recipients || 0}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4 hover:border-[#042d6d] transition-colors">
+                            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shrink-0">
+                                <FontAwesomeIcon icon="fa-solid fa-handshake" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Successful Matches</p>
+                                <p className="text-2xl font-extrabold text-[#042d6d]">{stats?.successful_matches || 0}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Access */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Link to="/users" className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-[#042d6d] hover:shadow-md transition-all group flex items-start gap-4">
+                            <div className="w-10 h-10 bg-slate-100 text-slate-600 group-hover:bg-[#042d6d] group-hover:text-white rounded-lg flex items-center justify-center shrink-0 transition-colors">
+                                <FontAwesomeIcon icon="fa-solid fa-users-gear" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 group-hover:text-[#042d6d] transition-colors">Manage Staff Users</h3>
+                                <p className="text-xs text-slate-500 mt-1">Approve or deactivate staff accounts across the system.</p>
+                            </div>
+                        </Link>
+                        <Link to="/reports" className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-[#042d6d] hover:shadow-md transition-all group flex items-start gap-4">
+                            <div className="w-10 h-10 bg-slate-100 text-slate-600 group-hover:bg-[#042d6d] group-hover:text-white rounded-lg flex items-center justify-center shrink-0 transition-colors">
+                                <FontAwesomeIcon icon="fa-solid fa-file-invoice" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 group-hover:text-[#042d6d] transition-colors">System Reports</h3>
+                                <p className="text-xs text-slate-500 mt-1">View comprehensive registry data and operation history.</p>
+                            </div>
+                        </Link>
+                    </div>
                 </main>
             </div>
         </div>
