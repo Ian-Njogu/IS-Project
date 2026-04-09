@@ -13,7 +13,7 @@ class SystemReportViewSet(viewsets.ViewSet):
     def operations(self, request):
         total_donors = Donor.objects.count()
         total_recipients = Recipient.objects.count()
-        successful_matches = Match.objects.filter(match_status='COMPLETED').count()
+        successful_matches = Match.objects.filter(match_status__in=['APPROVED', 'COMPLETED']).count()
         
         return Response({
             'total_donors': total_donors,

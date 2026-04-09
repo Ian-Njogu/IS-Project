@@ -11,7 +11,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 library.add(fas, far, fab)
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: 'fa-solid fa-table-columns' },
+    { name: 'Dashboard', href: '/admin', icon: 'fa-solid fa-table-columns' },
     { name: 'Users', href: '/users', icon: 'fa-solid fa-users' }, // user profiles for pending approval, current user profiles, new notifs show up here
     { name: 'Reports', href: '/reports', icon: 'fa-solid fa-chart-line' }, //has the patients info, matches and the report generation button 
 ];
