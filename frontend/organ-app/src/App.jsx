@@ -6,7 +6,6 @@ import AdminUsers from './components/AdminUsers'
 import HPDash from './components/HPDash'
 import HPHistory from './components/HPHistory'
 import LogIn from './components/LogIn'
-import Profile from './components/Profile'
 import Register from './components/Register'
 import TCDash from './components/TCDash'
 import TCPatients from './components/TCPatients'
@@ -24,7 +23,6 @@ function App() {
         {/* <Route path='/founders' element={<Founders />} /> */}
         <Route path='/' element={<Register />} />
         <Route path='/login' element={<LogIn />} />
-        <Route path='/profile' element={<Profile />} />
         <Route path='/hp' element={<HPDash />} />
         <Route path='/history' element={<HPHistory />} />
         <Route path='/tc' element={<TCDash />} />

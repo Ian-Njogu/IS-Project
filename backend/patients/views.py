@@ -47,11 +47,12 @@ class UnifiedPatientViewSet(viewsets.ViewSet):
         for p in patients:
             is_donor = hasattr(p, 'donor_profile')
             data.append({
-                'patient_id': p.patient_id,
+                'id': p.patient_id,
                 'name': p.name,
                 'patient_type': 'Donor' if is_donor else 'Recipient',
                 'organ': p.organ_type,
                 'blood_type': p.blood_type,
+                'hospital_name': p.hospital.name if p.hospital else None,
                 'medical_state': p.medical_history.replace('State: ', '') if p.medical_history.startswith('State: ') else 'Unknown',
             })
         return Response(data)

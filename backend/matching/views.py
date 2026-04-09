@@ -5,7 +5,7 @@ from .models import Match
 from django.db import models
 from patients.models import Recipient
 from .serializers import MatchSerializer
-from accounts.permissions import IsTransplantCoordinator, IsHealthcareProfessional
+from accounts.permissions import IsTransplantCoordinator, IsHealthcareProfessional, IsSystemAdministrator
 from .services import OrganMatchingService
 
 class MatchViewSet(viewsets.ModelViewSet):
@@ -13,7 +13,7 @@ class MatchViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            permission_classes = [IsTransplantCoordinator | IsHealthcareProfessional]
+            permission_classes = [IsTransplantCoordinator | IsHealthcareProfessional | IsSystemAdministrator]
         else:
             permission_classes = [IsTransplantCoordinator]
         return [permission() for permission in permission_classes]
