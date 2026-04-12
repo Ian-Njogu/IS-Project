@@ -135,10 +135,7 @@ function AdminReports() {
                             <h2 className="font-extrabold text-2xl text-[#042d6d]">System Reports</h2>
                             <p className="text-sm text-slate-500">View comprehensive registry data across all hospitals.</p>
                         </div>
-                        <button className="bg-[#042d6d] text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-[#154696] transition-colors shadow-sm flex items-center gap-2">
-                            <FontAwesomeIcon icon="fa-solid fa-download" />
-                            Export CSV
-                        </button>
+                        
                     </div>
 
                     <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

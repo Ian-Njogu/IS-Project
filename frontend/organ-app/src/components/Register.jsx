@@ -10,7 +10,7 @@ function Register() {
     hosName: '',
     email: '',
     password: '',
-    name: '', 
+    name: '',
   });
 
   const handleChange = (e) => {
@@ -40,7 +40,7 @@ function Register() {
         hospital_name: formData.hosName,
         email: formData.email,
         password: formData.password,
-        name: formData.name || formData.email.split('@')[0], 
+        name: formData.name || formData.email.split('@')[0],
       });
 
       navigate('/login');
@@ -133,7 +133,7 @@ function Register() {
 
           <p className="text-sm text-center text-gray-500">
             Already have an account?{' '}
-            <Link to="/login" className="text-[#042d6d] hover:underline">
+            <Link to="/" className="text-[#042d6d] hover:underline">
               Log in
             </Link>
           </p>

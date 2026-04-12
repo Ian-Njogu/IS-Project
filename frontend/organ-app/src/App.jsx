@@ -21,8 +21,8 @@ function App() {
         <Route path='/reports' element={<AdminReports />} />
         <Route path='/users' element={<AdminUsers />} />
         {/* <Route path='/founders' element={<Founders />} /> */}
-        <Route path='/' element={<Register />} />
-        <Route path='/login' element={<LogIn />} />
+        <Route path='/register' element={<Register />} />
+        <Route path='/' element={<LogIn />} />
         <Route path='/hp' element={<HPDash />} />
         <Route path='/history' element={<HPHistory />} />
         <Route path='/tc' element={<TCDash />} />

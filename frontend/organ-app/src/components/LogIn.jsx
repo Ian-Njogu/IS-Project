@@ -36,7 +36,7 @@ function LogIn() {
       localStorage.setItem('refresh_token', refresh);
 
       const userResponse = await api.get('/auth/me/');
-      const {role, name} = userResponse.data;
+      const { role, name } = userResponse.data;
 
       const userRole = userResponse.data.role;
 
@@ -108,6 +108,12 @@ function LogIn() {
           >
             Log In
           </button>
+          <p className="text-sm text-center text-gray-500">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-[#042d6d] hover:underline">
+              Register here!
+            </Link>
+          </p>
         </form>
       </div>
     </div>
