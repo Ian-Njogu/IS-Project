@@ -43,10 +43,24 @@ function Register() {
         name: formData.name || formData.email.split('@')[0],
       });
 
-      navigate('/login');
+      navigate('/');
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Registration failed. Please check your data.');
+      console.error('Registration Error:', err);
+      
+      const errorData = err.response?.data;
+      if (errorData) {
+        // Handle field-specific errors (common in DRF)
+        if (typeof errorData === 'object' && !errorData.detail) {
+          const errorMessages = Object.entries(errorData)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`)
+            .join(' | ');
+          setError(errorMessages);
+        } else {
+          setError(errorData.detail || 'Registration failed. Please check your data.');
+        }
+      } else {
+        setError('Network error. Please ensure the backend is running.');
+      }
     }
   };
 
